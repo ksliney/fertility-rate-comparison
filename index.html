@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<style>
+
+.states :hover {
+  fill: red;
+}
+
+.state-borders {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.btn {
+  padding: 5px;
+  margin-left: 100px;
+  margin-top: 20px;
+}
+
+.year {
+  font-family: 'oswald';
+  font-size: 16px;
+  margin-top: 7px;
+  font-weight: bold;
+  width: 4%;
+  display: block;
+}
+
+#jp-sum {
+  font-family: 'oswald';
+  font-size: 12px;
+  top: -100;
+  z-index: 100
+}
+
+#usa-sum {
+  font-family: 'oswald';
+  font-size: 12px;
+  z-index: 100
+}
+
+.uslabel {
+  font-size: 10px;
+  font-weight: bold;
+/*  background-color: rgba(255,255,255,0.1)
+*/}
+
+.jplabel {
+  font-size: 10px;
+  font-weight: bold;
+  top: 150px;
+  fill: none;
+/*  background-color: rgba(255,255,255,0.1)*/
+}
+
+.wrapper {
+  padding: 50 50 50 50;
+  background-color: none;
+  fill: none;
+}
+
+
+
+</style>
+<!-- <body>
+  <div class="wrapper">
+  <p id="uslabel">US:</p>
+  <p id="jplabel">Japan:</p>
+</div>
+</body> -->
+<div id="chart"></div>
+
+<button id="begin" class="btn btn-warning">Fertility Rate By Age</button>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<script>
+var margin = { top: 50, left: 100, right: 20, bottom: 20 }
+
+var height = 220 - margin.top - margin.bottom
+var width = 300 - margin.left - margin.right
+
+var svg = d3.select('#chart')
+  .append('svg')
+  .attr('height', height + margin.top + margin.bottom)
+  .attr('width', width + margin.left + margin.right)
+  .append('g')
+  .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+
+var xPositionScale = d3
+  .scaleLinear()
+  .domain([12, 55])
+  .range([0, width])
+
+var yPositionScale = d3
+  .scaleLinear()
+  .domain([0, 0.3])
+  .range([height, 0])
+
+// Create a d3.line function that uses your scales
+var jpArea = d3
+  .line()
+  .x(d => xPositionScale(d.Age))
+  .y(d => yPositionScale(d.ASFR_jp))
+
+var usArea = d3
+  .line()
+  .x(d => xPositionScale(d.Age))
+  .y(d => yPositionScale(d.ASFR_us))
+
+d3.csv('fertility.csv')
+  .then(ready)
+  .catch(err => {
+    console.log('Failed with', err)
+  })
+
+// var rect = svg
+//       .attr("x", 300)
+//       .attr("y", 300)
+//       .attr("width", 10)
+//       .attr("height", 10)
+//       // .attr("x", 0)
+//       // .attr("y", 0)
+//       // .attr("width", 10)
+//       // .attr("width", 10)
+//       .style('fill', '#29679e')
+
+function ready(datapoints) {
+  startDatapoints = datapoints.filter(d => d.Year == '1947')
+
+    svg
+      .append('text')
+      .text('1947')
+      .attr('x', 70)
+      .attr('y', -10)
+      .attr('text-anchor', 'middle')
+      .attr("class", "year")
+      .attr('font-size', '12')
+      .attr('id', 'year-label')
+
+      svg
+      .append('text')
+      .text('US: ')
+      .attr('x', 165)
+      .attr('y', -10)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '12')
+      .attr('class', 'uslabel')
+
+
+      svg
+      .append('text')
+      .text('Japan: ')
+      .attr('x', 160)
+      .attr('y', -30)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '12')
+      .attr('class', 'uslabel')
+
+
+
+
+    var usValues = startDatapoints.map(d => d.ASFR_us)
+    var usSum = d3.sum(usValues).toFixed(2)
+
+      svg
+        .append('text')
+        .text(usSum)
+        .attr('x', 190)
+        .attr('y', -10)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10')
+        .attr('fill', '#29679e')
+        .attr('id', 'usa-sum')
+        .attr('padding', 50)
+
+      var jpValues = startDatapoints.map(d => d.ASFR_jp)
+      var jpSum = d3.sum(jpValues).toFixed(2)
+
+      // purple=japan fertility (#bfb1e2)
+
+      svg
+        .append('text')
+        .text(jpSum)
+        .attr('x', 190)
+        .attr('y', -30)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10')
+        .attr('fill', '#4223ad')
+        .attr('id', 'jp-sum')
+
+
+
+        //blue = us fertility
+      svg
+        .append('path')
+        .datum(startDatapoints)
+        .attr('d', usArea)
+        .attr('fill', '#29679e')
+        .attr('opacity', 0.5)
+        .attr('id', 'usa-area')
+
+      svg
+        .append('path')
+        .datum(startDatapoints)
+        .attr('d', jpArea)
+        .attr('fill', '#4223ad')
+        .attr('opacity', 0.5)
+        .attr('id', 'jp-area')
+
+      var xAxis = d3.axisBottom(xPositionScale).tickValues([15, 30, 45])
+      svg
+        .append('g')
+        .attr('class', 'axis x-axis')
+        .attr('transform', 'translate(0,' + height + ')')
+        .call(xAxis)
+
+      var yAxis = d3.axisLeft(yPositionScale).ticks(3)
+      svg
+        .append('g')
+        .attr('class', 'axis y-axis')
+        .call(yAxis)
+
+
+
+      d3.select("#begin").on('click', function() {
+        console.log("I was clicked")
+
+        // Wait 2 seconds, then run a function
+        setTimeout(function() {
+          console.log("NOW I AM BEING RUN")
+        }, 2000)
+
+        let startYear = 1947
+        let currentYear = startYear
+        let finalYear = 2014
+
+        // Save our timer as a variable
+        let yearTimer = setInterval(function() {
+          // Increase currentYear by one
+          currentYear++
+          console.log(currentYear)
+
+          // Are you 2014? If so, let's stop
+          if(currentYear > finalYear) {
+            // currentYear = finalYear
+            currentYear = startYear
+            // clearInterval(yearTimer)
+          }
+
+          d3.select('#year-label').text(currentYear)
+
+          currentDatapoints = datapoints.filter(d => d.Year == currentYear)
+
+          svg.select('#usa-area')
+              .datum(currentDatapoints)
+              .transition()
+              .duration(200)
+              .attr('d', usArea)
+
+          svg.select('#jp-area')
+              .datum(currentDatapoints)
+              .transition()
+              .duration(200)
+              .attr('d', jpArea)
+
+          var usValues = currentDatapoints.map(d => d.ASFR_us)
+          var usSum = d3.sum(usValues).toFixed(2)
+
+          d3.select('#usa-sum').text(usSum)
+
+          var jpValues = currentDatapoints.map(d => d.ASFR_jp)
+          var jpSum = d3.sum(jpValues).toFixed(2)
+
+          d3.select('#jp-sum').text(jpSum)
+
+        }, 200)
+
+      })
+}
+
+</script>
+
+
+
+
+
+
+
+
